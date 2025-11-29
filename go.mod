@@ -6,8 +6,10 @@ toolchain go1.24.1
 
 require (
 	github.com/docker/docker v25.0.0+incompatible
+	github.com/docker/go-connections v0.6.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/google/uuid v1.6.0
+	github.com/gorilla/websocket v1.5.3
 	github.com/minio/minio-go/v7 v7.0.66
 )
 
@@ -17,7 +19,6 @@ require (
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/docker/go-connections v0.6.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect

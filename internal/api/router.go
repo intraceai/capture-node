@@ -55,6 +55,9 @@ func (s *Server) setupRoutes() {
 		sessions.DELETE("/:id", s.deleteSession)
 		sessions.POST("/:id/open", s.openURL)
 		sessions.POST("/:id/capture", s.captureSession)
+		sessions.POST("/:id/start-stream", s.startStream)
+		sessions.POST("/:id/stop-stream", s.stopStream)
+		sessions.GET("/:id/ws", s.proxyWebSocket)
 	}
 
 	captures := s.router.Group("/captures")

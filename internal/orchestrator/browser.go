@@ -20,12 +20,10 @@ import (
 )
 
 const (
-	sessionTimeout     = 15 * time.Minute
-	cleanupInterval    = 1 * time.Minute
-	browserImage       = "intraceai/remote-browser:latest"
-	browserAPIPort     = 8082
-	browserVNCPort     = 5900
-	browserNoVNCPort   = 6080
+	sessionTimeout   = 15 * time.Minute
+	cleanupInterval  = 1 * time.Minute
+	browserImage     = "intraceai/remote-browser:latest"
+	browserAPIPort   = 8082
 )
 
 type Orchestrator struct {
@@ -65,8 +63,7 @@ func (o *Orchestrator) CreateSession(ctx context.Context) (*shared.Session, erro
 	containerName := fmt.Sprintf("intrace-browser-%s", sessionID[:8])
 
 	exposedPorts := nat.PortSet{
-		nat.Port(fmt.Sprintf("%d/tcp", browserAPIPort)):   struct{}{},
-		nat.Port(fmt.Sprintf("%d/tcp", browserNoVNCPort)): struct{}{},
+		nat.Port(fmt.Sprintf("%d/tcp", browserAPIPort)): struct{}{},
 	}
 
 	config := &container.Config{
@@ -125,14 +122,12 @@ func (o *Orchestrator) CreateSession(ctx context.Context) (*shared.Session, erro
 
 	now := time.Now().UTC()
 	session := &shared.Session{
-		SessionID:     sessionID,
-		ContainerID:   resp.ID,
-		ContainerIP:   containerIP,
-		VNCPort:       browserVNCPort,
-		WebsocketPort: browserNoVNCPort,
-		APIPort:       browserAPIPort,
-		CreatedAt:     now,
-		ExpiresAt:     now.Add(sessionTimeout),
+		SessionID:   sessionID,
+		ContainerID: resp.ID,
+		ContainerIP: containerIP,
+		APIPort:     browserAPIPort,
+		CreatedAt:   now,
+		ExpiresAt:   now.Add(sessionTimeout),
 	}
 
 	o.mu.Lock()
@@ -295,6 +290,61 @@ func (o *Orchestrator) cleanupExpiredSessions(ctx context.Context) {
 	}
 }
 
-func (o *Orchestrator) GetVNCURL(session *shared.Session, publicHost string) string {
-	return fmt.Sprintf("ws://%s:%d/websockify", publicHost, session.WebsocketPort)
+func (o *Orchestrator) GetStreamURL(session *shared.Session, publicHost string) string {
+	// Return the capture-node proxy WebSocket URL
+	return fmt.Sprintf("ws://%s:8080/sessions/%s/ws", publicHost, session.SessionID)
+}
+
+func (o *Orchestrator) StartStream(ctx context.Context, sessionID string) error {
+	session, ok := o.GetSession(sessionID)
+	if !ok {
+		return fmt.Errorf("session not found")
+	}
+
+	apiURL := fmt.Sprintf("http://%s:%d/start-stream", session.ContainerIP, session.APIPort)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, apiURL, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := o.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed to start stream: %s", string(respBody))
+	}
+
+	return nil
+}
+
+func (o *Orchestrator) StopStream(ctx context.Context, sessionID string) error {
+	session, ok := o.GetSession(sessionID)
+	if !ok {
+		return fmt.Errorf("session not found")
+	}
+
+	apiURL := fmt.Sprintf("http://%s:%d/stop-stream", session.ContainerIP, session.APIPort)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, apiURL, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := o.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed to stop stream: %s", string(respBody))
+	}
+
+	return nil
 }

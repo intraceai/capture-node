@@ -61,12 +61,10 @@ type BrowserCaptureResponse struct {
 }
 
 type Session struct {
-	SessionID     string    `json:"session_id"`
-	ContainerID   string    `json:"container_id"`
-	ContainerIP   string    `json:"container_ip"`
-	VNCPort       int       `json:"vnc_port"`
-	WebsocketPort int       `json:"websocket_port"`
-	APIPort       int       `json:"api_port"`
-	CreatedAt     time.Time `json:"created_at"`
-	ExpiresAt     time.Time `json:"expires_at"`
+	SessionID   string    `json:"session_id"`
+	ContainerID string    `json:"-"` // internal only
+	ContainerIP string    `json:"-"` // internal only
+	APIPort     int       `json:"-"` // container internal port
+	CreatedAt   time.Time `json:"created_at"`
+	ExpiresAt   time.Time `json:"expires_at"`
 }

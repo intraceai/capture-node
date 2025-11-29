@@ -22,7 +22,7 @@ type Capture struct {
 
 type CreateSessionResponse struct {
 	SessionID string    `json:"session_id"`
-	VNCURL    string    `json:"vnc_url"`
+	StreamURL string    `json:"stream_url"`
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
